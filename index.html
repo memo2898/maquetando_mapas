@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa con Leaflet</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        #buttons {
+            margin-top: 10px;
+        }
+        button {
+            margin-right: 5px;
+        }
+
+        #Tit{
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+
+<div>
+    <p><span id="Tit">Dirección seleccionada:</span> <span id="dirSelec"></span></p>
+</div>
+
+<div>
+    <input type="text" id="buscar_sector">
+    <button onclick="buscarSector()">Buscar sector</button>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    async function buscarSector(){
+        const inputValue = document.querySelector("#buscar_sector").value.toUpperCase()
+        console.log(inputValue)
+        const busqueda = await obtenerCoordenadas(`${inputValue}, DISTRITO NACIONAL,REPÚBLICA DOMINICANA`)
+
+        var lat = busqueda.lat
+        var lng = busqueda.lng
+        changeCoordinates(lat, lng);
+        colocarPunto(lat, lng);
+        obtenerDireccion(lat, lng);
+
+        console.log(busqueda)
+    }
+
+
+    async function obtenerCoordenadas(sector) {
+       
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(sector)}&format=json`;
+        const respuesta = await fetch(url);
+        const datos = await respuesta.json();
+        
+        if (datos.length > 0) {
+            const location = datos[0];
+            return {
+            sector,
+            lat: location.lat,
+            lng: location.lon
+            };
+        } else {
+            throw new Error(`No se pudieron obtener las coordenadas para ${sector}`);
+        }
+}
+
+
+
+</script>
+<script>
+   
+     
+</script>
+<script>
+    // Crear el mapa y establecer las coordenadas iniciales y el nivel de zoom
+    var map = L.map('map').setView([51.505, -0.09], 13);
+
+    // Añadir una capa de mapa de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    var marker; // Variable global para el marcador
+
+    // Función para cambiar las coordenadas del mapa
+    function changeCoordinates(lat, lng) {
+        map.setView([lat, lng], map.getZoom());
+    }
+
+    // Función para colocar un marcador en las coordenadas especificadas
+    function colocarPunto(lat, lng) {
+        // Si ya existe un marcador, lo eliminamos antes de agregar uno nuevo
+        if (marker) {
+            map.removeLayer(marker);
+        }
+
+        // Crear un nuevo marcador con una imagen personalizada
+        marker = L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl: 'ico.png', // URL de la imagen del ícono
+                iconSize: [30, 40], // Tamaño del ícono
+                iconAnchor: [19, 38] // Punto de anclaje del ícono
+            })
+        }).addTo(map);
+    }
+
+ 
+
+    // Capturar las coordenadas al hacer clic en el mapa y colocar un marcador
+    map.on('click', function(e) {
+        var clickedLat = e.latlng.lat;
+        var clickedLng = e.latlng.lng;
+        colocarPunto(clickedLat, clickedLng);
+        console.log("Coordenadas clickeadas: " + clickedLat + ", " + clickedLng);
+        obtenerDireccion(clickedLat, clickedLng); // Obtener la dirección de las coordenadas clickeadas
+    });
+
+    // Función para obtener la dirección basada en las coordenadas utilizando el servicio de Nominatim
+    function obtenerDireccion(lat, lng) {
+        var url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.address) {
+                    var direccion = data.display_name;
+                    console.log("Dirección: " + direccion);
+                    document.querySelector("#dirSelec").innerText = direccion
+                } else {
+                    console.log("No se pudo obtener la dirección.");
+                }
+            })
+            .catch(error => console.log("Error al obtener la dirección: " + error));
+    }
+
+    // Eliminar la atribución del mapa
+    document.querySelector(".leaflet-control-attribution").remove();
+
+
+
+
+        // Función para ir a Gualey y colocar el marcador allí
+        function irAlcaldia() {
+        var lat = 18.44826905;
+        var lng = -69.92699306641279;
+        changeCoordinates(lat, lng);
+        colocarPunto(lat, lng);
+        obtenerDireccion(lat, lng); // Obtener la dirección de Gualey
+        
+    }
+    irAlcaldia();
+</script>
+
+</body>
+</html>
