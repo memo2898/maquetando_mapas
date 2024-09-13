@@ -75,7 +75,57 @@
 
 
 </script>
+<script>
+    function distritoNacional (){
+     console.log("ssss")
+     const distritoNacional = "Distrito Nacional, República Dominicana";
+         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(distritoNacional)}&format=json&polygon_geojson=1`;
+ 
+         fetch(url)
+         .then(response => response.json())
+         .then((data) =>{ 
+             console.log(data)
+             consultaInversa(data[0].lat, data[0].lon)
+         })
+         .catch(error => console.error('Error:', error));
+    }
+ 
+    distritoNacional ()
+ 
+    function consultaInversa(lat, long){
+ 
+     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${long}&format=json`;
+ 
+     fetch(url)
+     .then(response => response.json())
+     .then(data => console.log(data))
+     .catch(error => console.error('Error:', error));
+    }
+      
 
+    function sectores(){
+        const query = `
+            [out:json];
+            area["name"="Distrito Nacional"]["boundary"="administrative"]->.searchArea;
+            (
+                node["place"="neighbourhood"](area.searchArea);
+                way["place"="neighbourhood"](area.searchArea);
+                relation["place"="neighbourhood"](area.searchArea);
+            );
+            out center;
+            `;
+
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+            console.log(url)
+            fetch(url)
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+
+    }
+
+    sectores()
+ </script>
 <script>
     // Crear el mapa y establecer las coordenadas iniciales y el nivel de zoom
     var map = L.map('map').setView([51.505, -0.09], 13);
@@ -130,6 +180,7 @@
                 if (data.address) {
                     var direccion = data.display_name;
                     console.log("Dirección: " + direccion);
+                    obtenerCoordenadas(direccion)
                     document.querySelector("#dirSelec").innerText = direccion
                 } else {
                     console.log("No se pudo obtener la dirección.");
